@@ -1,3 +1,5 @@
+[Leia em Português](README.pt-BR.md)
+
 # ARGOS — Threat Intelligence Investigation Framework
 
 Local-first, open-source threat intelligence investigation framework in Python (`argos-cti`).
