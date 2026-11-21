@@ -535,6 +535,26 @@ function bindEvents() {
   });
 }
 
+
+  const resetBtn = $("#btn-reset-db");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", async () => {
+      const confirmed = window.confirm(
+        "Tem certeza que deseja apagar todas as investigações, artefatos, evidências e relações do banco SQLite atual?"
+      );
+      if (!confirmed) return;
+      try {
+        await api("/api/reset", { method: "POST", body: JSON.stringify({}) });
+        state.currentId = null;
+        state.detail = { investigation: null, artifacts: [], evidences: [], relations: [] };
+        await loadInvestigations();
+        showToast("Banco SQLite zerado com sucesso.");
+      } catch (err) {
+        showToast(`Falha ao zerar banco: ${err.message}`, true);
+      }
+    });
+  }
+
 document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   await loadHealth();

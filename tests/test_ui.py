@@ -174,3 +174,23 @@ def test_run_ui_server_opens_browser_when_enabled(tmp_path: Path) -> None:
 
     assert len(opened_urls) == 1
     assert opened_urls[0].startswith("http://127.0.0.1:")
+
+def test_ui_reset_database(running_ui: tuple[str, Path]) -> None:
+    base_url, _ = running_ui
+
+    status, created = _http_json(
+        base_url,
+        "/api/investigations",
+        method="POST",
+        payload={"title": "Caso Temporário", "objective": "Testar reset"},
+    )
+    assert status == 201
+    assert created["investigation"]["id"]
+
+    status, reset_res = _http_json(base_url, "/api/reset", method="POST", payload={})
+    assert status == 200
+    assert reset_res["status"] == "reset"
+
+    status, listed = _http_json(base_url, "/api/investigations")
+    assert status == 200
+    assert listed["investigations"] == []

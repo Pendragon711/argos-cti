@@ -318,6 +318,21 @@ class ArgosUIState:
             return self.workflow.export_investigation(investigation_id=inv_id, fmt=fmt_norm)
 
 
+    def reset_database(self) -> dict[str, Any]:
+        with self.lock:
+            close_fn = getattr(self.storage, "close", None)
+            if callable(close_fn):
+                close_fn()
+            for suffix in ("", "-wal", "-shm", "-journal"):
+                candidate = Path(f"{self.db_path}{suffix}")
+                if candidate.exists():
+                    candidate.unlink()
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.storage = SQLiteStorage(self.db_path)
+            self.workflow = InvestigationWorkflow(self.storage)
+            return {"status": "reset", "db_path": str(self.db_path)}
+
+
 class ArgosHTTPServer(ThreadingHTTPServer):
     """Local-only HTTP server holding shared ArgosUIState."""
 
@@ -467,6 +482,11 @@ class ArgosRequestHandler(BaseHTTPRequestHandler):
 
         try:
             payload = self._read_json_body()
+
+            if path == "/api/reset":
+                result = self.server.state.reset_database()
+                self._send_json(HTTPStatus.OK, result)
+                return
 
             if path == "/api/investigations":
                 created = self.server.state.create_investigation(payload)
