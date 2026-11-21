@@ -56,6 +56,36 @@ async function loadHealth() {
   }
 }
 
+
+function clearWorkspaceView() {
+  state.currentId = null;
+  state.detail = { investigation: null, artifacts: [], evidences: [], relations: [] };
+
+  $("#inv-title").value = "";
+  $("#inv-status").value = "open";
+  $("#inv-status-badge").textContent = "—";
+  $("#inv-objective").value = "";
+  $("#inv-scope").value = "";
+  $("#inv-notes").value = "";
+  $("#inv-conclusion").value = "";
+  $("#inv-limitations").value = "";
+
+  $("#count-artifacts").textContent = "0";
+  $("#count-evidences").textContent = "0";
+  $("#count-relations").textContent = "0";
+
+  for (const sel of ["#artifacts-tbody", "#relations-tbody", "#evidences-tbody"]) {
+    const tbody = $(sel);
+    if (tbody) tbody.innerHTML = "";
+  }
+  for (const sel of ["#relation-source", "#relation-target", "#pivot-seed"]) {
+    const el = $(sel);
+    if (el) el.innerHTML = "";
+  }
+  const preview = $("#report-preview");
+  if (preview) preview.textContent = "";
+}
+
 async function loadInvestigations(selectId = null) {
   const data = await api("/api/investigations");
   state.investigations = data.investigations || [];
@@ -67,7 +97,7 @@ async function loadInvestigations(selectId = null) {
     opt.value = "";
     opt.textContent = "Nenhuma investigação — crie uma";
     select.appendChild(opt);
-    state.currentId = null;
+    clearWorkspaceView();
     $("#modal-new-inv").showModal();
     return;
   }
