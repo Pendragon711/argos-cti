@@ -27,6 +27,18 @@ Local-first, open-source threat intelligence investigation framework in Python (
 - `src/argos/workflow.py` — End-to-end InvestigationWorkflow orchestrator
 - `tests/` — Unit and end-to-end integration tests
 
+## Installation & Setup
+
+Clone the repository, create and activate a virtual environment, and install the package in editable mode:
+
+    git clone https://github.com/Pendragon711/argos-cti.git
+    cd argos-cti
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -e ".[dev]"
+
+> **Note:** Make sure the virtual environment is active (`source .venv/bin/activate`) before running `argos` commands, or invoke `.venv/bin/argos` directly.
+
 ## CLI Usage
 
 Initialize local storage:

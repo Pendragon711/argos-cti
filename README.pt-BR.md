@@ -27,6 +27,18 @@ Framework open-source e *local-first* de investigação de inteligência de amea
 - `src/argos/workflow.py` — Orquestrador ponta a ponta `InvestigationWorkflow`
 - `tests/` — Testes unitários e de integração ponta a ponta
 
+## Instalação e Configuração
+
+Clone o repositório, crie e ative um ambiente virtual e instale o pacote em modo editável:
+
+    git clone https://github.com/Pendragon711/argos-cti.git
+    cd argos-cti
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -e ".[dev]"
+
+> **Nota:** Certifique-se de que o ambiente virtual esteja ativado (`source .venv/bin/activate`) antes de executar os comandos `argos`, ou chame `.venv/bin/argos` diretamente.
+
 ## Uso via CLI
 
 Inicializar o armazenamento local:
