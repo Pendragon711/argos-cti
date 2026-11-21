@@ -68,6 +68,8 @@ Iniciar a interface web local do workbench:
 
     argos ui
 
+Atalho rápido (`argos.init` em `/usr/local/bin`): `argos.init` (prepara a `.venv` e sobe `argos ui --no-browser`) ou `argos.init <subcomando>`.
+
 ## Demonstração do Fluxo de Investigação (UI Local)
 
 O passo a passo abaixo demonstra um ciclo completo de investigação no **ARGOS CTI Workbench** operando em modo *local-first* sobre SQLite:

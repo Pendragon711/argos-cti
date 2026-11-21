@@ -68,6 +68,8 @@ Launch the local workbench UI:
 
     argos ui
 
+Quick launcher helper (`argos.init` in `/usr/local/bin`): `argos.init` (starts `.venv` and `argos ui --no-browser`) or `argos.init <subcommand>`.
+
 ## Local UI Investigation Walkthrough
 
 The walkthrough below demonstrates an end-to-end investigation workflow in the **ARGOS CTI Workbench** running in *local-first* mode over SQLite:
