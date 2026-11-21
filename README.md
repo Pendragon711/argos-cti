@@ -68,6 +68,13 @@ Launch the local workbench UI:
 
     argos ui
 
+Quick launcher helper (`argos.init` in `/usr/local/bin`): `argos.init` (prepares `.venv` and starts `argos ui --no-browser`) or `argos.init <subcommand>`.
+
+To reset the database directly from the web UI, click **Limpar Banco** in the top bar (with confirmation). To start with a separate SQLite file via `--db-path` or wipe the default database manually:
+
+    argos ui --db-path /tmp/argos-fresh.sqlite3 --no-browser
+    rm -f ~/.local/share/argos/argos.sqlite3*
+
 Quick launcher helper (`argos.init` in `/usr/local/bin`): `argos.init` (starts `.venv` and `argos ui --no-browser`) or `argos.init <subcommand>`.
 
 ## Local UI Investigation Walkthrough
