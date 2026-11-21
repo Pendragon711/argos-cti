@@ -70,6 +70,11 @@ Iniciar a interface web local do workbench:
 
 Atalho rápido (`argos.init` em `/usr/local/bin`): `argos.init` (prepara a `.venv` e sobe `argos ui --no-browser`) ou `argos.init <subcomando>`.
 
+Para zerar o banco diretamente na interface, use o botão **Limpar Banco** na barra superior (com confirmação). Para iniciar com um arquivo SQLite separado via `--db-path` ou apagar o banco padrão manualmente:
+
+    argos ui --db-path /tmp/argos-fresh.sqlite3 --no-browser
+    rm -f ~/.local/share/argos/argos.sqlite3*
+
 ## Demonstração do Fluxo de Investigação (UI Local)
 
 O passo a passo abaixo demonstra um ciclo completo de investigação no **ARGOS CTI Workbench** operando em modo *local-first* sobre SQLite:
