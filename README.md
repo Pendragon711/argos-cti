@@ -1,6 +1,6 @@
 # ARGOS CTI
 
-**ARGOS CTI** is a local-first **Cyber Threat Intelligence (CTI)** and structured threat investigation platform built in **Go**, backed by **SQLite**, and served through an embedded web UI (`127.0.0.1:8080`) with a dark theme (`#070709`) and gold accents (`#d4af37`).
+**ARGOS CTI** is a local-first **Cyber Threat Intelligence (CTI)** and structured threat investigation platform built in **Go**, backed by **SQLite**, and served through an embedded web UI (`127.0.0.1:8080`).
 
 [Leia em Português](README.pt-BR.md)
 

@@ -1,6 +1,6 @@
 # ARGOS CTI
 
-**ARGOS CTI** é uma plataforma *local-first* de **Cyber Threat Intelligence (CTI)** e investigação estruturada de ameaças, desenvolvida em **Go**, com persistência em **SQLite** e interface web embarcada (`127.0.0.1:8080`) estilizada em tema escuro (`#070709`) com acentos em dourado (`#d4af37`).
+**ARGOS CTI** é uma plataforma *local-first* de **Cyber Threat Intelligence (CTI)** e investigação estruturada de ameaças, desenvolvida em **Go**, com persistência em **SQLite** e interface web embarcada (`127.0.0.1:8080`).
 
 [Read in English](README.md)
 
