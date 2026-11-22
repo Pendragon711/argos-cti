@@ -1,58 +1,60 @@
 # ARGOS CTI
 
-**ARGOS CTI** é uma plataforma *local-first* de **Cyber Threat Intelligence (CTI)** e investigação estruturada de ameaças, desenvolvida em **Go**, com persistência em **SQLite** e interface web embarcada (`127.0.0.1:8080`) estilizada em tema escuro (`#070709`) com acentos em dourado (`#d4af37`).
+**ARGOS CTI** is a local-first **Cyber Threat Intelligence (CTI)** and structured threat investigation platform built in **Go**, backed by **SQLite**, and served through an embedded web UI (`127.0.0.1:8080`) with a dark theme (`#070709`) and gold accents (`#d4af37`).
 
-O sistema organiza a análise de incidentes e indicadores de comprometimento (IOCs) em um fluxo investigativo guiado de **5 etapas**, combinando extração e normalização de artefatos, enriquecimento concorrente em provedores externos de inteligência, registro de evidências com hash **SHA-256**, análise de relações e travessia por *pivot*, além de consolidação analítica e exportação padronizada.
+[Leia em Português](README.pt-BR.md)
 
----
-
-## Sumário
-
-- [Arquitetura e Stack](#arquitetura-e-stack)
-- [Principais Funcionalidades](#principais-funcionalidades)
-- [Provedores CTI e Configuração](#provedores-cti-e-configuração)
-- [Instalação e Execução](#instalação-e-execução)
-- [Guia Passo a Passo (Fluxo de 5 Etapas)](#guia-passo-a-passo-fluxo-de-5-etapas)
-- [Demonstração Visual](#demonstração-visual)
-- [Boas Práticas para Repositório](#boas-práticas-para-repositório)
+ARGOS structures incident and Indicator of Compromise (IOC) analysis into a guided **5-step workflow**, combining artifact extraction and normalization, concurrent enrichment across external threat intelligence providers, SHA-256 evidentiary tracking, relationship graph and pivot traversal, case assessment, and multi-format export.
 
 ---
 
-## Arquitetura e Stack
+## Table of Contents
 
-- **Backend & Motor de Triagem:** **Go** (`cmd/argos`, `internal/engine`, `internal/domain`, `internal/providers`) com execução paralela para consulta a provedores, cache local e consolidação de vereditos e *scores* de risco.
-- **Persistência:** **SQLite** local (`argos.db`) para armazenamento de investigações, artefatos triados, evidências, relações no grafo e configurações de provedores.
-- **Interface Web Embarcada:** Aplicação **HTML/CSS/JS** servida localmente em `http://127.0.0.1:8080` via `./argos ui`, estruturada em torno de um fluxo investigativo de 5 etapas.
-- **Formatos de Exportação:** Relatório analítico em **Markdown (`.md`)**, *bundle* **STIX 2.1 (`.json`)**, **CSV (`.csv`)** e *dump* estruturado em **JSON (`.json`)**.
-
----
-
-## Principais Funcionalidades
-
-1. **Gestão de Casos e Escopo:** Define título, objetivo analítico, escopo da investigação, limitações/lacunas de visibilidade e observações iniciais.
-2. **Ingestão e Triagem Automatizada:** Extrai e normaliza IPs, domínios, URLs, hashes (`MD5`, `SHA-1`, `SHA-256`) e e-mails a partir de texto livre ou logs estruturados — incluindo indicadores *defangados* (`[.]`, `(.)`, `[:]`, `[@]`, `hxxp://`, `hxxps://`) e pares `chave=valor` (ex.: `src_ip=...`, `host=...`, `uri=...`, `payload_md5=...`).
-3. **Cadeia de Evidências:** Registra trechos de log ou observações vinculadas ao caso ou a um artefato específico, classificando o nível de certeza (`observed`, `reported`, `inferred`, `unverified`) e gerando automaticamente o hash **SHA-256** do conteúdo.
-4. **Grafo de Relações e Pivot:** Cria arestas direcionadas entre indicadores (`resolves_to`, `hosted_on`, `part_of`, `contains`, `associated_with`) e executa travessia por *pivot* a partir de um artefato semente com profundidade configurável.
-5. **Avaliação Analítica e Exportação:** Consolida o panorama do caso e exporta relatórios legíveis ou intercambiáveis para integração com outras ferramentas e documentação técnica.
+- [Architecture & Tech Stack](#architecture--tech-stack)
+- [Core Capabilities](#core-capabilities)
+- [Threat Intelligence Providers & Configuration](#threat-intelligence-providers--configuration)
+- [Installation & Execution](#installation--execution)
+- [Step-by-Step Workflow Guide](#step-by-step-workflow-guide)
+- [Visual Walkthrough](#visual-walkthrough)
+- [Repository Hygiene & License](#repository-hygiene--license)
 
 ---
 
-## Provedores CTI e Configuração
+## Architecture & Tech Stack
 
-O motor de enriquecimento suporta os seguintes provedores:
+- **Backend & Triage Engine:** **Go** (`cmd/argos`, `internal/engine`, `internal/domain`, `internal/providers`) featuring concurrent provider lookups, local caching, risk scoring, and verdict aggregation.
+- **Persistence Layer:** Local **SQLite** database (`argos.db`) storing cases, triaged artifacts, evidence records, graph edges, and provider settings.
+- **Embedded Web Interface:** **HTML/CSS/JS** UI served locally at `http://127.0.0.1:8080` via `./argos ui`, organized around a 5-step investigative workflow.
+- **Export Formats:** **Markdown (`.md`)** reports, **STIX 2.1 (`.json`)** bundles, **CSV (`.csv`)** exports, and structured **JSON (`.json`)** dumps.
+
+---
+
+## Core Capabilities
+
+1. **Case & Scope Management:** Defines investigation title, analytical objective, scope, visibility limitations/gaps, and initial analyst notes.
+2. **Ingestion & Triage:** Extracts and normalizes IPs, domains, URLs, hashes (`MD5`, `SHA-1`, `SHA-256`), and email addresses from free text or structured logs — including defanged indicators (`[.]`, `(.)`, `[:]`, `[@]`, `hxxp://`, `hxxps://`) and `key=value` log tokens (such as `src_ip=...`, `host=...`, `uri=...`, `payload_md5=...`).
+3. **Evidentiary Chain:** Records log snippets or observations linked to a case or specific artifact, assigns certainty levels (`observed`, `reported`, `inferred`, `unverified`), and automatically computes a **SHA-256** digest.
+4. **Relationship Graph & Pivot:** Connects artifacts with directed relationships (`resolves_to`, `hosted_on`, `part_of`, `contains`, `associated_with`) and traverses connected nodes from a seed indicator up to a configurable depth.
+5. **Assessment & Export:** Consolidates case findings and exports human-readable reports or structured intelligence packages.
+
+---
+
+## Threat Intelligence Providers & Configuration
+
+The enrichment engine integrates with:
 
 - **AbuseIPDB**
 - **VirusTotal**
 - **AlienVault OTX**
 - **CrowdSec CTI**
 
-As chaves de API podem ser configuradas diretamente no painel **Provedores & API Keys** na interface web (ficando persistidas no banco SQLite local) ou injetadas via variáveis de ambiente antes de iniciar o binário.
+API keys can be configured directly inside the **Providers & API Keys** section of the web UI (persisted in local SQLite) or passed via environment variables before launching the binary.
 
 ---
 
-## Instalação e Execução
+## Installation & Execution
 
-### 1. Clonar o repositório e rodar os testes unitários/de integração
+### 1. Clone the repository and run the test suite
 
 ~~~bash
 git clone https://github.com/Pendragon711/argos-cti.git
@@ -60,16 +62,16 @@ cd argos-cti
 go test ./...
 ~~~
 
-### 2. Compilar o binário e iniciar a interface web
+### 2. Build the binary and start the web interface
 
 ~~~bash
 go build -o argos ./cmd/argos
 ./argos ui
 ~~~
 
-### 3. Acessar a aplicação
+### 3. Open the web UI
 
-Abra o navegador em:
+Navigate to:
 
 ~~~text
 http://127.0.0.1:8080
@@ -77,81 +79,81 @@ http://127.0.0.1:8080
 
 ---
 
-## Guia Passo a Passo (Fluxo de 5 Etapas)
+## Step-by-Step Workflow Guide
 
-### Passo 1 — Caso e Escopo
+### Step 1 — Case & Scope
 
-1. Abra `http://127.0.0.1:8080` após iniciar `./argos ui`.
-2. Preencha os dados da investigação: **Título**, **Objetivo**, **Escopo**, **Limitações / Lacunas de Visibilidade** e **Notas**.
-3. Salve/crie o caso e confirme que ele está selecionado no seletor superior de investigações.
+1. Open `http://127.0.0.1:8080` after running `./argos ui`.
+2. Fill out the investigation metadata: **Title**, **Objective**, **Scope**, **Limitations / Visibility Gaps**, and **Notes**.
+3. Save/create the case and verify it is selected in the top investigation selector.
 
-### Passo 2 — Ingestão e Triagem
+### Step 2 — Ingestion & Triage
 
-1. Avance para **Ingestão & Triagem**.
-2. Cole logs brutos, alertas ou trechos de telemetria no campo de ingestão. Exemplo:
+1. Move to **Ingestion & Triage**.
+2. Paste raw logs, alerts, or telemetry lines into the ingestion box. Example:
 
 ~~~text
 [2026-11-22T00:18:41Z] HONEYPOT_HIT src_ip=192.42.116.68 dst_port=443 sensor=enois-edge-01 host=c2[.]telemetry-sync[.]org uri=hxxps://c2[.]telemetry-sync[.]org/v1/beacon payload_md5=d41d8cd98f00b204e9800998ecf8427e
 ~~~
 
-3. Clique em **Extrair e Triar Artefatos** para normalizar os IOCs, consultar os provedores ativos e calcular os *scores* e vereditos na tabela de resultados.
+3. Click **Extract & Triage Artifacts** to normalize IOCs, query enabled providers, and inspect scores and verdicts in the results table.
 
-### Passo 3 — Evidências
+### Step 3 — Evidence
 
-1. Avance para **Evidências**.
-2. Selecione o **Artefato vinculado** (ex.: `192.42.116.68`), informe a **Fonte** (ex.: `honeypot-enois-edge-01`), escolha o nível de **Certeza** (`observed`) e insira o **Conteúdo da evidência**.
-3. Clique em **Registrar Evidência** e verifique o registro gerado com o campo `sha256` calculado automaticamente.
+1. Move to **Evidence**.
+2. Select the **Linked Artifact** (e.g., `192.42.116.68`), set the **Source** (e.g., `honeypot-enois-edge-01`), choose **Certainty** (`observed`), and enter the **Evidence Content**.
+3. Click **Record Evidence** and verify the saved record includes an automatically generated `sha256` hash.
 
-### Passo 4 — Relações e Pivot
+### Step 4 — Relationships & Pivot
 
-1. Avance para **Relações & Pivot**.
-2. Conecte os artefatos relevantes definindo **Origem**, **Relação** e **Destino** (por exemplo, `192.42.116.68` -> `associated_with` -> `c2.telemetry-sync.org` e `c2.telemetry-sync.org` -> `contains` -> `https://c2.telemetry-sync.org/v1/beacon`).
-3. Informe o **Artefato semente (seed)** e a **Profundidade** (ex.: `2`) e clique em **Pivotar** para inspecionar `relations` e `pivot_nodes` no grafo.
+1. Move to **Relationships & Pivot**.
+2. Connect related artifacts using **Source**, **Relationship**, and **Target** (for example, `192.42.116.68` -> `associated_with` -> `c2.telemetry-sync.org` and `c2.telemetry-sync.org` -> `contains` -> `https://c2.telemetry-sync.org/v1/beacon`).
+3. Enter a **Seed Artifact** and **Depth** (e.g., `2`) and click **Pivot** to inspect `relations` and `pivot_nodes`.
 
-### Passo 5 — Avaliação e Exportação
+### Step 5 — Assessment & Export
 
-1. Avance para **Avaliação & Exportação**.
-2. Clique em **Gerar Avaliação do Caso** para consolidar a análise no painel.
-3. Exporte o resultado no formato desejado:
-   - **Relatório Markdown (`.md`)** para documentação e *write-ups*.
-   - **Bundle STIX 2.1 (`.json`)** para compartilhamento estruturado de inteligência.
-   - **CSV (`.csv`)** e **JSON (`.json`)** para análise tabular ou automação.
-
----
-
-## Demonstração Visual
-
-### 1. Caso e Escopo
-
-| Tela Inicial Limpa | Caso Preenchido |
-| :---: | :---: |
-| ![Tela Inicial Limpa](screenshots/01-tela-inicial-limpa.jpeg) | ![Tela Inicial Preenchida](screenshots/01.5-tela-inicial-preenchida-com-exemplo.jpeg) |
-
-### 2. Ingestão e Triagem
-
-| Etapa Vazia | Log Preenchido | Resultado da Triagem |
-| :---: | :---: | :---: |
-| ![Ingestão e Triagem Vazia](screenshots/02-ingestao-e-triagem-vazia.jpeg) | ![Ingestão e Triagem Preenchidos](screenshots/02.5-ingestao-e-traigem-preenchidos.jpeg) | ![Resultado Ingestão e Triagem](screenshots/02.8-resultado-ingestao-e-traigem.jpeg) |
-
-### 3. Evidências
-
-| Evidências Vazio | Evidência Preenchida | Evidência Registrada |
-| :---: | :---: | :---: |
-| ![Evidências Vazio](screenshots/03-evidencias-vazio.jpeg) | ![Evidências Preenchido](screenshots/03.5-evidencias-preenchido.jpeg) | ![Evidência Registrada](screenshots/03.8-evidencia-registrada.jpeg) |
-
-### 4. Relações e Pivot
-
-| Relações Preenchidas | Resultado do Pivot |
-| :---: | :---: |
-| ![Relações e Pivot Preenchido](screenshots/04-relacoes-e-pivot-preenchido.jpeg) | ![Pivotados](screenshots/04.5-pivotados.jpeg) |
-
-### 5. Avaliação e Exportação
-
-![Avaliação Analítica e Exportação](screenshots/05-avaliacao-analitica-e-exportacao.jpeg)
+1. Move to **Assessment & Export**.
+2. Click **Generate Case Assessment** to consolidate the case evaluation.
+3. Export your findings in the required format:
+   - **Markdown Report (`.md`)** for write-ups and documentation.
+   - **STIX 2.1 Bundle (`.json`)** for structured intelligence sharing.
+   - **CSV (`.csv`)** and **JSON (`.json`)** for tabular analysis or downstream automation.
 
 ---
 
-## Boas Práticas para Repositório
+## Visual Walkthrough
 
-- Mantenha `argos` (binário compilado) e `argos.db` / `*.db-wal` / `*.db-shm` (banco local com histórico e chaves de API configuradas na UI) listados no `.gitignore`.
-- Revise o `git status` e o `git diff` antes de cada `commit` para garantir que nenhum segredo ou artefato temporário seja versionado.
+### 1. Case & Scope
+
+| Clean Initial Screen | Case Populated |
+| :---: | :---: |
+| ![Clean Initial Screen](screenshots/01-tela-inicial-limpa.jpeg) | ![Case Populated](screenshots/01.5-tela-inicial-preenchida-com-exemplo.jpeg) |
+
+### 2. Ingestion & Triage
+
+| Empty Stage | Log Populated | Triage Results |
+| :---: | :---: | :---: |
+| ![Ingestion Empty](screenshots/02-ingestao-e-triagem-vazia.jpeg) | ![Ingestion Populated](screenshots/02.5-ingestao-e-traigem-preenchidos.jpeg) | ![Triage Results](screenshots/02.8-resultado-ingestao-e-traigem.jpeg) |
+
+### 3. Evidence
+
+| Empty Stage | Evidence Populated | Evidence Recorded |
+| :---: | :---: | :---: |
+| ![Evidence Empty](screenshots/03-evidencias-vazio.jpeg) | ![Evidence Populated](screenshots/03.5-evidencias-preenchido.jpeg) | ![Evidence Recorded](screenshots/03.8-evidencia-registrada.jpeg) |
+
+### 4. Relationships & Pivot
+
+| Relationships Populated | Pivot Results |
+| :---: | :---: |
+| ![Relationships Populated](screenshots/04-relacoes-e-pivot-preenchido.jpeg) | ![Pivot Results](screenshots/04.5-pivotados.jpeg) |
+
+### 5. Assessment & Export
+
+![Assessment and Export](screenshots/05-avaliacao-analitica-e-exportacao.jpeg)
+
+---
+
+## Repository Hygiene & License
+
+- Keep the compiled binary (`argos`) and local SQLite files (`argos.db`, `argos.db-wal`, `argos.db-shm`) ignored via `.gitignore`, as local databases may store runtime state or API keys configured through the web UI.
+- Distributed under the **MIT License** — see [LICENSE](LICENSE).
