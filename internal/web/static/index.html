@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ARGOS CTI — Fluxo de Investigação</title>
+  <style>
+    :root {
+      --bg: #070709;
+      --panel: #0e0e12;
+      --panel-2: #16161d;
+      --text: #f3f1ea;
+      --muted: #a39e8c;
+      --border: rgba(212, 175, 55, 0.22);
+      --gold: #d4af37;
+      --gold-bright: #f2cf66;
+      --gold-dim: rgba(212, 175, 55, 0.14);
+      --mal: #ef4444;
+      --sus: #f59e0b;
+      --clean: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.10), transparent 48%),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 22px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.8px;
+      color: var(--gold-bright);
+    }
+    h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: var(--gold);
+      letter-spacing: 0.4px;
+    }
+    code {
+      color: var(--gold-bright);
+      background: rgba(212, 175, 55, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .inv-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    select, input, textarea, button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 13px;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.14);
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(135deg, #d4af37, #b38b1e);
+      border-color: var(--gold);
+      color: #09090b;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    button.secondary {
+      background: var(--panel-2);
+      border-color: var(--border);
+      color: var(--gold-bright);
+      font-weight: 600;
+    }
+    button.success {
+      background: linear-gradient(135deg, #e5c158, #c29824);
+      border-color: var(--gold-bright);
+      color: #09090b;
+    }
+    button:hover { filter: brightness(1.09); }
+    .container { padding: 18px 22px; max-width: 1320px; width: 100%; margin: 0 auto; flex: 1; }
+
+    /* Stepper */
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 900px) { .stepper { grid-template-columns: 1fr; } }
+    .step-item {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-item:hover { border-color: rgba(212, 175, 55, 0.5); }
+    .step-item.active {
+      border-color: var(--gold);
+      background: linear-gradient(180deg, rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.04));
+    }
+    .step-item.done .step-num {
+      background: var(--gold);
+      color: #09090b;
+      border-color: var(--gold);
+    }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-item.active .step-num {
+      background: var(--gold-bright);
+      color: #09090b;
+      border-color: var(--gold-bright);
+    }
+    .step-meta { display: flex; flex-direction: column; }
+    .step-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .step-sub { font-size: 11px; color: var(--muted); }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      color: var(--gold-bright);
+    }
+    .card p.desc { margin: 0 0 14px 0; font-size: 13px; color: var(--muted); }
+    .step-pane { display: none; }
+    .step-pane.active { display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .grow { flex: 1; min-width: 180px; }
+    .nav-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; }
+    th { color: var(--gold); font-weight: 600; }
+    pre {
+      background: #060608;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 380px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      margin: 0;
+      color: #ebe6d5;
+    }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .malicious { background: rgba(239,68,68,.2); color: #fca5a5; }
+    .suspicious { background: rgba(212,175,55,.22); color: var(--gold-bright); }
+    .clean { background: rgba(16,185,129,.2); color: #6ee7b7; }
+    .unknown { background: rgba(163,158,140,.18); color: #d6d1c1; }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--gold-dim);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--gold-bright);
+      font-weight: 600;
+    }
+    footer {
+      padding: 10px 22px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ARGOS CTI — Investigação Estruturada</h1>
+    <div class="inv-bar">
+      <span class="pill" id="activeCaseBadge">Caso #1</span>
+      <select id="invSelect" onchange="onInvestigationChange()"></select>
+      <button class="secondary" onclick="toggleProvidersPanel()">Provedores & API Keys (<span id="activeProvidersCount">0</span>/4)</button>
+      <button class="secondary" onclick="refreshAll()">Sincronizar</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- PAINEL DE PROVEDORES & CHAVES DE API -->
+    <div id="providersPanel" class="card" style="display:none; border-color: var(--gold);">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div>
+          <h2>Configuração de Provedores CTI (API Keys)</h2>
+          <p class="desc">Preencha suas chaves abaixo para ativar o enriquecimento externo automático na triagem. As chaves ficam salvas localmente no <code>argos.db</code> (ou via variáveis de ambiente).</p>
+        </div>
+        <button class="secondary" onclick="toggleProvidersPanel()">Fechar</button>
+      </div>
+      <div id="providersSummaryBanner" class="pill" style="display:block; margin-bottom:12px;">Carregando status dos provedores...</div>
+      <div id="providersGrid" class="grid-2"></div>
+      <div class="row" style="margin-top:12px;">
+        <button onclick="saveProviderKeys()">Salvar Chaves</button>
+        <span id="providersStatusMsg" style="font-size:12px; color:var(--muted); align-self:center;"></span>
+      </div>
+    </div>
+
+    <!-- BARRA DE FLUXO SEQUENCIAL -->
+    <div class="stepper">
+      <div class="step-item active" id="step-btn-1" onclick="goStep(1)">
+        <span class="step-num">1</span>
+        <div class="step-meta">
+          <span class="step-title">Caso / Escopo</span>
+          <span class="step-sub" id="sub-1">Definir investigação</span>
+        </div>
+      </div>
+      <div class="step-item" id="step-btn-2" onclick="goStep(2)">
+        <span class="step-num">2</span>
+        <div class="step-meta">
+          <span class="step-title">Ingestão & Triagem</span>
+          <span class="step-sub" id="sub-2">0 artefatos</span>
+        </div>
+      </div>
+      <div class="step-item" id="step-btn-3" onclick="goStep(3)">
+        <span class="step-num">3</span>
+        <div class="step-meta">
+          <span class="step-title">Evidências</span>
+          <span class="step-sub" id="sub-3">0 registradas</span>
+        </div>
+      </div>
+      <div class="step-item" id="step-btn-4" onclick="goStep(4)">
+        <span class="step-num">4</span>
+        <div class="step-meta">
+          <span class="step-title">Relações & Pivot</span>
+          <span class="step-sub" id="sub-4">0 conexões</span>
+        </div>
+      </div>
+      <div class="step-item" id="step-btn-5" onclick="goStep(5)">
+        <span class="step-num">5</span>
+        <div class="step-meta">
+          <span class="step-title">Avaliação & Export</span>
+          <span class="step-sub" id="sub-5">Relatório & STIX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 1: INVESTIGAÇÃO -->
+    <div id="step-1" class="step-pane active">
+      <div class="grid-2">
+        <div class="card">
+          <h2>Passo 1 — Iniciar ou Selecionar Investigação</h2>
+          <p class="desc">Defina o contexto operacional da investigação ou avance usando o caso ativo no topo.</p>
+          <div class="row"><input id="invTitle" class="grow" placeholder="Título do caso (ex.: Varredura em rotas expostas)" /></div>
+          <div class="row"><input id="invObjective" class="grow" placeholder="Objetivo analítico" /></div>
+          <div class="row"><input id="invScope" class="grow" placeholder="Escopo (hosts, domínios, janela temporal)" /></div>
+          <div class="row"><textarea id="invLimitations" class="grow" rows="2" placeholder="Limitações ou lacunas de visibilidade"></textarea></div>
+          <div class="row"><textarea id="invNotes" class="grow" rows="2" placeholder="Notas iniciais"></textarea></div>
+          <div class="row">
+            <button onclick="createInvestigationAndNext()">Criar Caso e Avançar →</button>
+            <button class="secondary" onclick="goStep(2)">Usar Caso Atual e Avançar →</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Investigações Existentes</h2>
+          <p class="desc">Selecione qualquer caso abaixo ou no seletor superior para carregar seu estado.</p>
+          <pre id="invListOut"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 2: INGESTÃO & TRIAGEM -->
+    <div id="step-2" class="step-pane">
+      <div class="card">
+        <h2>Passo 2 — Ingestão e Triagem de Artefatos</h2>
+        <p class="desc">Cole texto bruto, logs ou IOCs (suporta defang como <code>[.]</code>, <code>[@]</code> e <code>hxxp</code>). Os artefatos extraídos alimentam automaticamente os próximos passos.</p>
+        <div class="row">
+          <textarea id="triageInput" class="grow" rows="3" placeholder="Ex.: Alerta detectado em 192.42.116.68 comunicando com c2[.]exemplo[.]org e hxxps://painel.exemplo[.]org/stage1.bin"></textarea>
+        </div>
+        <div class="row">
+          <button onclick="runTriage()">Extrair e Triar Artefatos</button>
+          <input id="filterQ" placeholder="Filtrar artefatos..." oninput="renderIndicatorsTable()" />
+          <select id="filterVerdict" onchange="renderIndicatorsTable()">
+            <option value="">Todos os vereditos</option>
+            <option value="malicious">malicious</option>
+            <option value="suspicious">suspicious</option>
+            <option value="clean">clean</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Valor Normalizado</th>
+              <th>Tipo</th>
+              <th>Veredito</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="indicatorsBody"></tbody>
+        </table>
+        <div class="nav-footer">
+          <button class="secondary" onclick="goStep(1)">← Voltar para Caso</button>
+          <button onclick="goStep(3)">Avançar para Evidências →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 3: EVIDÊNCIAS -->
+    <div id="step-3" class="step-pane">
+      <div class="grid-2">
+        <div class="card">
+          <h2>Passo 3 — Registrar Evidência Epistêmica</h2>
+          <p class="desc">Vincule observações e fontes aos artefatos ingeridos no passo anterior. O hash SHA-256 é calculado automaticamente.</p>
+          <div class="row">
+            <select id="evArtifactSelect" class="grow"></select>
+          </div>
+          <div class="row">
+            <input id="evSource" class="grow" placeholder="Fonte (ex.: honeypot, firewall, osint)" />
+            <select id="evCertainty">
+              <option value="observed">observed (observado diretamente)</option>
+              <option value="reported">reported (reportado por fonte)</option>
+              <option value="inferred">inferred (inferido)</option>
+              <option value="unverified">unverified (não verificado)</option>
+            </select>
+          </div>
+          <div class="row">
+            <textarea id="evContent" class="grow" rows="4" placeholder="Descreva a evidência ou cole o trecho de log bruto..."></textarea>
+          </div>
+          <button onclick="addEvidence()">Registrar Evidência</button>
+        </div>
+        <div class="card">
+          <h2>Evidências Registradas no Caso</h2>
+          <p class="desc">Histórico com nível de certeza e integridade SHA-256.</p>
+          <pre id="evListOut"></pre>
+        </div>
+      </div>
+      <div class="nav-footer">
+        <button class="secondary" onclick="goStep(2)">← Voltar para Ingestão</button>
+        <button onclick="goStep(4)">Avançar para Relações & Pivot →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 4: RELAÇÕES & PIVOT -->
+    <div id="step-4" class="step-pane">
+      <div class="grid-2">
+        <div class="card">
+          <h2>Passo 4 — Conectar Artefatos & Executar Pivot</h2>
+          <p class="desc">Relacione os artefatos triados para mapear infraestrutura e explore conexões por profundidade.</p>
+          <div class="row">
+            <select id="relSrcSelect" class="grow"></select>
+          </div>
+          <div class="row">
+            <select id="relType" class="grow">
+              <option value="resolves_to">resolves_to</option>
+              <option value="hosted_on">hosted_on</option>
+              <option value="part_of">part_of</option>
+              <option value="contains">contains</option>
+              <option value="associated_with">associated_with</option>
+            </select>
+          </div>
+          <div class="row">
+            <select id="relDstSelect" class="grow"></select>
+          </div>
+          <button onclick="addRelation()">Conectar Artefatos</button>
+
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+          <h3>Exploração por Pivot</h3>
+          <div class="row">
+            <select id="pivotSeedSelect" class="grow"></select>
+            <input id="pivotDepth" type="number" value="2" min="1" max="5" style="width: 85px;" title="Profundidade" />
+            <button onclick="runPivot()">Pivotar</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Grafo de Relações & Travessia</h2>
+          <p class="desc">Relações direcionadas registradas e resultado da última consulta de pivot.</p>
+          <pre id="graphOut"></pre>
+        </div>
+      </div>
+      <div class="nav-footer">
+        <button class="secondary" onclick="goStep(3)">← Voltar para Evidências</button>
+        <button onclick="goStep(5)">Avançar para Avaliação & Exportação →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 5: AVALIAÇÃO & EXPORTAÇÃO -->
+    <div id="step-5" class="step-pane">
+      <div class="card">
+        <h2>Passo 5 — Avaliação Analítica e Exportação</h2>
+        <p class="desc">Consolide o risco multidimensional do caso e exporte os resultados prontos para compartilhamento ou ingestão externa.</p>
+        <div class="row">
+          <button onclick="loadAssessment()">Gerar Avaliação do Caso</button>
+          <button class="success" onclick="loadExport('md', true)">Relatório Markdown (.md)</button>
+          <button class="secondary" onclick="loadExport('stix', true)">Bundle STIX 2.1 (.json)</button>
+          <button class="secondary" onclick="loadExport('csv', true)">Exportar CSV (.csv)</button>
+          <button class="secondary" onclick="loadExport('json', true)">Exportar JSON (.json)</button>
+          <button class="secondary" onclick="copyReport()">Copiar</button>
+        </div>
+        <pre id="reportOut"></pre>
+        <div class="nav-footer">
+          <button class="secondary" onclick="goStep(4)">← Voltar para Relações & Pivot</button>
+          <button class="secondary" onclick="goStep(1)">Iniciar Novo Caso</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>ARGOS CTI • Fluxo Local-First</span>
+    <span>127.0.0.1:8080</span>
+  </footer>
+
+<script>
+  let currentInvId = 1;
+  let currentStep = 1;
+  let caseArtifacts = [];
+  let caseEvidences = [];
+  let caseRelations = [];
+
+  function goStep(n) {
+    currentStep = n;
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById('step-' + i).classList.toggle('active', i === n);
+      document.getElementById('step-btn-' + i).classList.toggle('active', i === n);
+    }
+    if (n === 1) loadInvestigations();
+    if (n === 2) loadIndicators();
+    if (n === 3) { populateArtifactSelects(); loadEvidences(); }
+    if (n === 4) { populateArtifactSelects(); loadRelations(); }
+    if (n === 5) loadAssessment();
+  }
+
+  function updateStepperBadges() {
+    document.getElementById('activeCaseBadge').textContent = `Caso #${currentInvId}`;
+    document.getElementById('sub-2').textContent = `${caseArtifacts.length} artefato(s)`;
+    document.getElementById('sub-3').textContent = `${caseEvidences.length} evidência(s)`;
+    document.getElementById('sub-4').textContent = `${caseRelations.length} relação(ões)`;
+
+    document.getElementById('step-btn-1').classList.toggle('done', currentInvId > 0);
+    document.getElementById('step-btn-2').classList.toggle('done', caseArtifacts.length > 0);
+    document.getElementById('step-btn-3').classList.toggle('done', caseEvidences.length > 0);
+    document.getElementById('step-btn-4').classList.toggle('done', caseRelations.length > 0);
+  }
+
+  function populateArtifactSelects() {
+    const targets = ['evArtifactSelect', 'relSrcSelect', 'relDstSelect', 'pivotSeedSelect'];
+    for (const id of targets) {
+      const sel = document.getElementById(id);
+      if (!sel) continue;
+      const prev = sel.value;
+      sel.innerHTML = '';
+      if (id === 'evArtifactSelect') {
+        const general = document.createElement('option');
+        general.value = '0';
+        general.textContent = 'Evidência geral do caso (sem artefato específico)';
+        sel.appendChild(general);
+      }
+      if (caseArtifacts.length === 0 && id !== 'evArtifactSelect') {
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = 'Nenhum artefato triado neste caso ainda (volte ao Passo 2)';
+        sel.appendChild(empty);
+        continue;
+      }
+      for (const art of caseArtifacts) {
+        const opt = document.createElement('option');
+        opt.value = art.id;
+        opt.textContent = `#${art.id} — ${art.value} (${art.type} | ${art.verdict})`;
+        sel.appendChild(opt);
+      }
+      if (prev && Array.from(sel.options).some(o => o.value === prev)) {
+        sel.value = prev;
+      } else if (id === 'relDstSelect' && caseArtifacts.length > 1) {
+        sel.selectedIndex = 1;
+      }
+    }
+  }
+
+  function onInvestigationChange() {
+    currentInvId = Number(document.getElementById('invSelect').value || 1);
+    refreshAll();
+  }
+
+  async function loadInvestigations() {
+    const res = await fetch('/api/investigations');
+    const list = await res.json() || [];
+    const sel = document.getElementById('invSelect');
+    sel.innerHTML = '';
+    for (const inv of list) {
+      const opt = document.createElement('option');
+      opt.value = inv.id;
+      opt.textContent = `#${inv.id} — ${inv.title} (${inv.status})`;
+      if (inv.id === currentInvId) opt.selected = true;
+      sel.appendChild(opt);
+    }
+    if (list.length > 0 && !list.some(i => i.id === currentInvId)) {
+      currentInvId = list[0].id;
+      sel.value = currentInvId;
+    }
+    const active = list.find(i => i.id === currentInvId);
+    if (active) {
+      document.getElementById('sub-1').textContent = active.title;
+    }
+    document.getElementById('invListOut').textContent = JSON.stringify(list, null, 2);
+  }
+
+  async function createInvestigationAndNext() {
+    const title = document.getElementById('invTitle').value.trim();
+    if (!title) {
+      alert('Informe um título para a investigação ou clique em "Usar Caso Atual e Avançar".');
+      return;
+    }
+    const payload = {
+      title,
+      objective: document.getElementById('invObjective').value,
+      scope: document.getElementById('invScope').value,
+      limitations: document.getElementById('invLimitations').value,
+      notes: document.getElementById('invNotes').value,
+      status: 'open'
+    };
+    const res = await fetch('/api/investigations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const created = await res.json();
+      currentInvId = created.id;
+      document.getElementById('invTitle').value = '';
+      document.getElementById('invObjective').value = '';
+      document.getElementById('invScope').value = '';
+      document.getElementById('invLimitations').value = '';
+      document.getElementById('invNotes').value = '';
+      await refreshAll();
+      goStep(2);
+    }
+  }
+
+  async function loadIndicators() {
+    const res = await fetch('/api/indicators');
+    const all = await res.json() || [];
+    caseArtifacts = all.filter(it => Number(it.investigation_id) === Number(currentInvId));
+    renderIndicatorsTable();
+    populateArtifactSelects();
+    updateStepperBadges();
+  }
+
+  function renderIndicatorsTable() {
+    const q = (document.getElementById('filterQ').value || '').toLowerCase();
+    const v = document.getElementById('filterVerdict').value || '';
+    const filtered = caseArtifacts.filter(it => {
+      if (v && it.verdict !== v) return false;
+      if (q && !(`${it.value} ${it.type} ${it.verdict}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    const body = document.getElementById('indicatorsBody');
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Nenhum artefato neste caso ainda. Cole indicadores acima para iniciar a triagem.</td></tr>';
+      return;
+    }
+    body.innerHTML = filtered.map(it => `
+      <tr>
+        <td>#${it.id}</td>
+        <td><code>${it.value}</code></td>
+        <td>${it.type}</td>
+        <td><span class="badge ${it.verdict}">${it.verdict}</span></td>
+        <td>${it.risk_score}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function runTriage() {
+    const el = document.getElementById("triageInput");
+    const rawText = el.value;
+    if (!rawText.trim()) return;
+    const invId = Number(document.getElementById("invSelect").value || currentInvId || 1);
+    currentInvId = invId;
+    const body = document.getElementById("indicatorsBody");
+    body.innerHTML = "<tr><td colspan=5 style=color:var(--gold-bright)>Consultando provedores...</td></tr>";
+    const res = await fetch("/api/triage", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({investigation_id: invId, raw_text: rawText})
+    });
+    const txt = await res.text();
+    if (!res.ok) {
+      body.innerHTML = "<tr><td colspan=5 style=color:#fca5a5>Erro " + res.status + ": " + txt + "</td></tr>";
+      return;
+    }
+    el.value = "";
+    await loadIndicators();
+  }
+
+  async function loadEvidences() {
+    const res = await fetch(`/api/evidences?investigation_id=${currentInvId}`);
+    caseEvidences = await res.json() || [];
+    document.getElementById('evListOut').textContent = JSON.stringify(caseEvidences, null, 2);
+    updateStepperBadges();
+  }
+
+  async function addEvidence() {
+    const content = document.getElementById('evContent').value.trim();
+    if (!content) return;
+    const payload = {
+      investigation_id: currentInvId,
+      artifact_id: Number(document.getElementById('evArtifactSelect').value || 0),
+      source: document.getElementById('evSource').value || 'analista-local',
+      certainty: document.getElementById('evCertainty').value,
+      content
+    };
+    const res = await fetch('/api/evidences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      document.getElementById('evContent').value = '';
+      await loadEvidences();
+    }
+  }
+
+  async function loadRelations() {
+    const res = await fetch(`/api/relations?investigation_id=${currentInvId}`);
+    caseRelations = await res.json() || [];
+    document.getElementById('graphOut').textContent = JSON.stringify({ relations: caseRelations }, null, 2);
+    updateStepperBadges();
+  }
+
+  async function addRelation() {
+    const src = Number(document.getElementById('relSrcSelect').value);
+    const dst = Number(document.getElementById('relDstSelect').value);
+    if (!src || !dst) return;
+    const payload = {
+      investigation_id: currentInvId,
+      source_id: src,
+      target_id: dst,
+      type: document.getElementById('relType').value,
+      certainty: 'observed'
+    };
+    const res = await fetch('/api/relations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) await loadRelations();
+  }
+
+  async function runPivot() {
+    const seed = Number(document.getElementById('pivotSeedSelect').value);
+    const depth = Number(document.getElementById('pivotDepth').value || 2);
+    if (!seed) return;
+    const res = await fetch(`/api/pivot?seed_id=${seed}&max_depth=${depth}`);
+    const nodes = await res.json() || [];
+    document.getElementById('graphOut').textContent = JSON.stringify({
+      relations: caseRelations,
+      pivot_nodes: nodes
+    }, null, 2);
+  }
+
+  async function loadAssessment() {
+    const out = document.getElementById('reportOut');
+    out.textContent = 'Gerando avaliação...';
+    try {
+      const res = await fetch(`/api/assessment?investigation_id=${currentInvId}`);
+      const txt = await res.text();
+      if (!res.ok) {
+        out.textContent = `Erro HTTP ${res.status} em /api/assessment:\n${txt}`;
+        return;
+      }
+      try {
+        out.textContent = JSON.stringify(JSON.parse(txt), null, 2);
+      } catch {
+        out.textContent = txt;
+      }
+    } catch (err) {
+      out.textContent = `Falha ao chamar /api/assessment: ${err}`;
+    }
+  }
+
+  function triggerDownload(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyReport() {
+    const txt = document.getElementById('reportOut').textContent || '';
+    if (!txt) return;
+    await navigator.clipboard.writeText(txt);
+  }
+
+  async function loadExport(fmt, download = false) {
+    const out = document.getElementById('reportOut');
+    out.textContent = `Exportando ${fmt}...`;
+    try {
+      const res = await fetch(`/api/export?investigation_id=${currentInvId}&format=${fmt}`);
+      const txt = await res.text();
+      if (!res.ok) {
+        out.textContent = `Erro HTTP ${res.status} em /api/export:\n${txt}`;
+        return;
+      }
+      out.textContent = txt;
+      if (download) {
+        const meta = {
+          md:   { ext: 'md',        mime: 'text/markdown;charset=utf-8' },
+          stix: { ext: 'stix.json', mime: 'application/json;charset=utf-8' },
+          csv:  { ext: 'csv',       mime: 'text/csv;charset=utf-8' },
+          json: { ext: 'json',      mime: 'application/json;charset=utf-8' }
+        }[fmt] || { ext: 'txt', mime: 'text/plain;charset=utf-8' };
+        triggerDownload(`argos-caso-${currentInvId}.${meta.ext}`, txt, meta.mime);
+      }
+    } catch (err) {
+      out.textContent = `Falha ao chamar /api/export: ${err}`;
+    }
+  }
+
+  function toggleProvidersPanel() {
+    const p = document.getElementById('providersPanel');
+    const opening = p.style.display === 'none';
+    p.style.display = opening ? 'block' : 'none';
+    if (opening) loadProviders();
+  }
+
+  async function loadProviders() {
+    const res = await fetch('/api/providers');
+    if (!res.ok) return;
+    const list = await res.json() || [];
+    const configuredList = list.filter(p => p.configured);
+    const activeCount = configuredList.length;
+    document.getElementById('activeProvidersCount').textContent = activeCount;
+
+    const banner = document.getElementById('providersSummaryBanner');
+    if (banner) {
+      if (activeCount === 0) {
+        banner.textContent = 'Nenhuma chave cadastrada no momento — a triagem rodará apenas com análise local até você salvar ao menos uma API key.';
+      } else {
+        const resumo = configuredList
+          .map(p => `${p.label} [${p.source === 'ui' ? 'salva na UI' : 'env: ' + p.env_var} • ${p.masked_key}]`)
+          .join(' • ');
+        banner.textContent = `${activeCount} de ${list.length} provedor(es) já cadastrado(s) e ativo(s): ${resumo}`;
+      }
+    }
+
+    const grid = document.getElementById('providersGrid');
+    grid.innerHTML = list.map(p => {
+      const originLabel = p.source === 'ui'
+        ? 'Salva no banco (UI)'
+        : p.source === 'env'
+          ? `Variável de ambiente (${p.env_var})`
+          : 'Nenhuma chave cadastrada';
+      return `
+      <div style="background:var(--panel-2); border:1px solid ${p.configured ? 'var(--gold)' : 'var(--border)'}; border-radius:8px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong>${p.label}</strong>
+          <span class="badge ${p.configured ? 'clean' : 'unknown'}">
+            ${p.configured ? 'Cadastrado • ' + p.source : 'Não cadastrado'}
+          </span>
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">
+          Origem: <strong style="color:var(--text);">${originLabel}</strong><br/>
+          Suporta: <strong>${p.supports}</strong> • Env: <code>${p.env_var}</code>
+          ${p.masked_key ? `<br/>Chave cadastrada: <code>${p.masked_key}</code>` : ''}
+        </div>
+        <div class="row" style="margin-bottom:0;">
+          <input id="key-${p.name}" type="password" class="grow" placeholder="${p.configured ? 'Nova chave para substituir a atual...' : 'Cole a API key do ' + p.label + '...'}" />
+          ${p.source === 'ui' ? `<button class="secondary" onclick="clearProviderKey('${p.name}')">Remover</button>` : ''}
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  async function saveProviderKeys() {
+    const names = ['abuseipdb', 'virustotal', 'alienvault_otx', 'crowdsec_cti'];
+    const keys = {};
+    for (const name of names) {
+      const el = document.getElementById('key-' + name);
+      if (el && el.value.trim() !== '') {
+        keys[name] = el.value.trim();
+      }
+    }
+    const msg = document.getElementById('providersStatusMsg');
+    if (Object.keys(keys).length === 0) {
+      msg.textContent = 'Preencha ao menos uma chave antes de salvar.';
+      return;
+    }
+    const res = await fetch('/api/providers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys })
+    });
+    if (res.ok) {
+      msg.textContent = 'Chaves salvas e ativadas com sucesso!';
+      await loadProviders();
+    } else {
+      msg.textContent = 'Erro ao salvar chaves.';
+    }
+  }
+
+  async function clearProviderKey(name) {
+    const res = await fetch('/api/providers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys: { [name]: '' } })
+    });
+    if (res.ok) {
+      document.getElementById('providersStatusMsg').textContent = `Chave de ${name} removida.`;
+      await loadProviders();
+    }
+  }
+
+  async function refreshAll() {
+    await loadInvestigations();
+    await loadIndicators();
+    await loadEvidences();
+    await loadRelations();
+    await loadProviders();
+  }
+
+  refreshAll();
+</script>
+</body>
+</html>

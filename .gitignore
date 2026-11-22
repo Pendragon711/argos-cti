@@ -1,12 +1,4 @@
-.venv/
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
-dist/
-build/
-*.sqlite
-*.sqlite3
-*.db
-.env
+argos
+argos.db
+*.db-wal
+*.db-shm
